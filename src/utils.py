@@ -2,6 +2,7 @@ import os
 import sys
 import dill
 from sklearn.metrics import r2_score
+from sklearn.model_selection import GridSearchCV
 from src.exception import CustomException
 
 import numpy as np
@@ -20,13 +21,22 @@ def save_object(file_path, obj):
     except Exception as e:
         raise CustomException(e, sys) # type: ignore
 
-def evaluate_models(X_train, y_train, X_test, y_test, models):
+
+def evaluate_models(X_train, y_train, X_test, y_test, models, param):
     try:
         report = {}
 
         for i in range(len(models)):
             model = list(models.values())[i]
             model_name = list(models.keys())[i]
+            param_grid = param[list(models.keys())[i]]  # Use param_grid instead of overwriting param
+
+            gs = GridSearchCV(model, param_grid, cv=3)  # Use param_grid here
+            gs.fit(X_train, y_train)
+
+            model.set_params(**gs.best_params_)
+            
+
             model.fit(X_train, y_train)
 
             y_train_pred = model.predict(X_train)
